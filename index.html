@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Gestão por Competências v2</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - Monitoramento Completo</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f8fafc; }
+        header { background: #002d57; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0; }
+        
+        .nav-tabs { display: flex; list-style: none; margin: 0; padding: 0; height: 100%; }
+        .nav-tabs li { display: flex; align-items: center; padding: 0 20px; cursor: pointer; color: #cbd5e0; border-bottom: 4px solid transparent; transition: 0.3s; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-tabs li:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-tabs li.active { border-bottom: 4px solid #4ade80; color: white; background: rgba(255,255,255,0.1); font-weight: bold; }
+
+        .content-page { display: none; flex: 1; overflow: hidden; position: relative; }
+        .content-page.active { display: flex; }
+
+        #map { flex: 2; background: #cbd5e0; }
+        #sidebar-resumo { flex: 1; min-width: 400px; background: white; overflow-y: auto; padding: 20px; border-left: 1px solid #e2e8f0; padding-bottom: 60px; }
+
+        #page-competencias { flex-direction: column; padding: 25px; background: white; overflow-y: auto; }
+        .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 60px; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #f1f5f9; color: #475569; padding: 10px; text-align: left; position: sticky; top: 0; border-bottom: 2px solid #e2e8f0; z-index: 10; cursor: pointer; user-select: none; }
+        th:hover { background: #e2e8f0; }
+        th::after { content: ' ↕'; font-size: 9px; color: #94a3b8; }
+        
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+        tr:hover { background: #f8fafc; }
+
+        .nota-badge { display: inline-block; width: 28px; text-align: center; padding: 2px 0; border-radius: 4px; color: white; font-weight: bold; }
+        
+        .label-fixo-cidade { background: transparent; border: none; box-shadow: none; font-weight: 800; color: #0f172a; font-size: 10px; text-shadow: 1px 1px 2px white, -1px -1px 2px white; white-space: nowrap; }
+        .tooltip-detalhes { background: #002d57; color: white; border: none; border-radius: 4px; padding: 8px; font-size: 11px; }
+
+        .footer-link { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; background: rgba(255, 255, 255, 0.95); border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; z-index: 2000; font-size: 12px; backdrop-filter: blur(5px); }
+        .footer-link a { color: #002d57; text-decoration: none; font-weight: 600; }
+        .footer-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: bold; font-size: 18px;">AGSUS - Gestão de Competências</div>
+    <ul class="nav-tabs">
+        <li onclick="openTab('page-mapa', this)" class="active">Visão Geral (Resumo)</li>
+        <li onclick="openTab('page-competencias', this)"> Avaliação Detalhada (Detalhado)</li>
+    </ul>
+</header>
+
+<div id="page-mapa" class="content-page active">
+    <div id="map"></div>
+    <div id="sidebar-resumo">
+        <h3 style="margin-top:0">Consolidado por Distrito</h3>
+        <table id="tabela-resumo">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0, 'tabela-resumo')">Unidade</th>
+                    <th onclick="sortTable(1, 'tabela-resumo')">Chefe</th>
+                    <th onclick="sortTable(2, 'tabela-resumo')">Asse.</th>
+                    <th onclick="sortTable(3, 'tabela-resumo')">Média</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="page-competencias" class="content-page">
+    <h3 style="margin-top:0">Avaliação Individual de Competências</h3>
+    <div class="table-wrapper">
+        <table id="tabela-detalhada">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0, 'tabela-detalhada')">Nome</th>
+                    <th onclick="sortTable(1, 'tabela-detalhada')">Unidade</th>
+                    <th onclick="sortTable(2, 'tabela-detalhada')">Função</th>
+                    <th onclick="sortTable(3, 'tabela-detalhada')">Gestão de processos</th>
+                    <th onclick="sortTable(4, 'tabela-detalhada')">Gestão de projetos</th>
+                    <th onclick="sortTable(5, 'tabela-detalhada')">Governança</th>
+                    <th onclick="sortTable(6, 'tabela-detalhada')">SEI</th>
+                    <th onclick="sortTable(7, 'tabela-detalhada')">Decisão</th>
+                    <th onclick="sortTable(8, 'tabela-detalhada')">Inst.</th>
+                    <th onclick="sortTable(9, 'tabela-detalhada')">Comun.</th>
+                    <th onclick="sortTable(10, 'tabela-detalhada')">Média</th>
+                    <th onclick="sortTable(11, 'tabela-detalhada')">Observações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<footer class="footer-link">
+    <a href="https://docs.google.com/spreadsheets/d/1EWxmHVDE_Yp_DIGZ-jT9Z1BZ3KVrxM23XsxZgz4L0X0/edit?gid=0#gid=0" target="_blank">
+        🔗 Clique aqui para acessar a Base de Dados Completa
+    </a>
+</footer>
+
+<script>
+    const resumoMapa = [
+    { n: "Maceió", lat: -9.66, lng: -35.73, c: 4.3, a: 2.9 },
+    { n: "Altamira", lat: -3.20, lng: -52.20, c: 4.6, a: 3.9 },
+    { n: "Cruzeiro do Sul", lat: -7.63, lng: -72.66, c: 3.1, a: 3.1 },
+    { n: "São Gabriel", lat: -0.13, lng: -67.08, c: 4.0, a: 2.4 },
+    { n: "Rio Branco", lat: -9.97, lng: -67.81, c: 2.7, a: 2.7 },
+    { n: "Tabatinga", lat: -4.23, lng: -69.93, c: 4.9, a: 1.9 },
+    { n: "Macapá", lat: 0.03, lng: -51.06, c: 4.0, a: 4.0 },
+    { n: "S. Félix Araguaia", lat: -11.61, lng: -50.67, c: 2.0, a: 4.0 },
+    { n: "Salvador", lat: -12.97, lng: -38.50, c: 4.3, a: 4.3 }, // Consolidado (Média Regional/Distrital)
+    { n: "Fortaleza", lat: -3.71, lng: -38.54, c: 4.3, a: 3.7 },
+    { n: "Cuiabá", lat: -15.60, lng: -56.09, c: 4.0, a: 3.0 },
+    { n: "Belém", lat: -1.45, lng: -48.49, c: 3.1, a: 0.0 },
+    { n: "Florianópolis", lat: -27.59, lng: -48.54, c: 3.9, a: 0.0 },
+    { n: "Curitiba", lat: -25.42, lng: -49.27, c: 4.0, a: 0.0 },
+    { n: "Colíder", lat: -10.81, lng: -55.45, c: 4.0, a: 3.0 },
+    { n: "Redenção", lat: -8.02, lng: -50.03, c: 3.0, a: 3.0 },
+    { n: "Leste Roraima", lat: 2.82, lng: -60.67, c: 4.0, a: 4.0 },
+    { n: "Manaus", lat: -3.11, lng: -60.02, c: 4.9, a: 0.6 },
+    { n: "São Luís", lat: -2.53, lng: -44.30, c: 4.3, a: 4.1 },
+    { n: "Campo Grande", lat: -20.44, lng: -54.64, c: 4.1, a: 0.0 },
+    { n: "Lábrea", lat: -7.25, lng: -64.79, c: 4.0, a: 4.0 },
+    { n: "Tefé", lat: -3.35, lng: -64.71, c: 4.9, a: 4.7 },
+    { n: "Gov. Valadares", lat: -18.85, lng: -41.94, c: 4.0, a: 4.0 },
+    { n: "Parintins", lat: -2.62, lng: -56.73, c: 4.0, a: 4.0 },
+    { n: "Recife", lat: -8.05, lng: -34.88, c: 3.6, a: 3.7 },
+    { n: "Porto Velho", lat: -8.76, lng: -63.90, c: 1.1, a: 1.1 },
+    { n: "João Pessoa", lat: -7.11, lng: -34.86, c: 4.1, a: 4.1 },
+    { n: "Brasília", lat: -15.79, lng: -47.88, c: 3.0, a: 3.0 }, // Referente ao Centro-Oeste
+    { n: "Boa Vista", lat: 2.81, lng: -60.67, c: 5.0, a: 4.3 }, // Média entre Regional e Distrital
+    { n: "Itaituba", lat: -4.27, lng: -55.98, c: 5.0, a: 3.4 },
+    { n: "Palmas", lat: -10.18, lng: -48.33, c: 0.0, a: 4.0 },
+    { n: "Atalaia Norte", lat: -4.37, lng: -70.19, c: 0.0, a: 2.9 },
+    { n: "Cacoal", lat: -11.43, lng: -61.44, c: 2.0, a: 0.1 },
+    { n: "Barra Garças", lat: -15.89, lng: -52.25, c: 4.1, a: 4.0 },
+    { n: "Canarana", lat: -13.55, lng: -52.27, c: 4.1, a: 4.1 },
+    { n: "São Paulo", lat: -23.55, lng: -46.63, c: 3.6, a: 0.0 }
+];
+
+    const detComp = [
+    { n: "Maynamy Jose Santana Da Silva", u: "Maceió", f: "Chefe", c: [3, 4, 4, 4, 5, 5, 5], med: 4.3, obs: "" },
+    { n: "Manoel Mendonca De Farias Neto", u: "Maceió", f: "Assessor", c: [2, 2, 3, 3, 3, 3, 4], med: 2.9, obs: "" },
+    { n: "Flavio Moreira De Paula", u: "Altamira", f: "Chefe", c: [4, 4, 5, 4, 5, 5, 5], med: 4.6, obs: "" },
+    { n: "Aline Cunha Gomes", u: "Altamira", f: "Assessor", c: [3, 4, 4, 4, 4, 4, 4], med: 3.9, obs: "" },
+    { n: "Ireni Herculano Uchoa Moura", u: "Cruzeiro do Sul", f: "Chefe", c: [4, 3, 3, 3, 3, 3, 3], med: 3.1, obs: "" },
+    { n: "Quedma Da Cruz Oliveira", u: "Cruzeiro do Sul", f: "Assessor", c: [4, 3, 3, 3, 3, 3, 3], med: 3.1, obs: "" },
+    { n: "Raylene Andrade Oliveira", u: "São Gabriel", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Carlos Savio Da Silva Ferraz", u: "São Gabriel", f: "Assessor", c: [1, 2, 2, 2, 4, 4, 2], med: 2.4, obs: "" },
+    { n: "Raquel Passífico da Rocha", u: "Rio Branco", f: "Chefe", c: [3, 3, 3, 2, 3, 3, 2], med: 2.7, obs: "" },
+    { n: "Celino Avelino Batista Apurina", u: "Rio Branco", f: "Assessor", c: [2, 3, 3, 3, 3, 3, 2], med: 2.7, obs: "" },
+    { n: "Cristiane Ferreira da Silva", u: "Tabatinga", f: "Chefe", c: [4, 5, 5, 5, 5, 5, 5], med: 4.9, obs: "" },
+    { n: "Francisco Macedo Moçambite", u: "Tabatinga", f: "Assessor", c: [2, 2, 2, 2, 1, 2, 2], med: 1.9, obs: "Assessor com tempo de escritório e ainda não entende o seu papel institucional, ainda se posiciona como Condisi. Não possui espírito de colaboração com a chefe do escritório." },
+    { n: "Argemiro Falcao Junior", u: "Macapá", f: "Chefe", c: [4, 4, 4, 3, 4, 4, 5], med: 4.0, obs: "" },
+    { n: "Kutanan Waiapi Waiana", u: "Macapá", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Samuel Yriwerana Karaja", u: "S. Félix Araguaia", f: "Chefe", c: [2, 2, 2, 2, 2, 2, 2], med: 2.0, obs: "" },
+    { n: "Ohori Haritxana De Farias Karaja", u: "S. Félix Araguaia", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Andressa Carvalho Santos", u: "Salvador", f: "Chefe", c: [4, 4, 4, 4, 5, 4, 5], med: 4.3, obs: "" },
+    { n: "Ana Thereza Nunes Campos", u: "Salvador", f: "Assessor", c: [4, 4, 4, 4, 5, 4, 5], med: 4.3, obs: "" },
+    { n: "Joao Paulo Vieira Neto", u: "Fortaleza", f: "Chefe", c: [4, 4, 4, 4, 5, 4, 5], med: 4.3, obs: "" },
+    { n: "Raimundo Sebastião Rodrigues Neto", u: "Fortaleza", f: "Assessor", c: [3, 3, 3, 4, 4, 4, 5], med: 3.7, obs: "" },
+    { n: "Libério Uiagumeareu", u: "Cuiabá", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Vanessa Taís de Santana Barros", u: "Cuiabá", f: "Assessor", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Ronaldo Ramos Nunes", u: "Belém", f: "Chefe", c: [3, 3, 3, 3, 3, 4, 3], med: 3.1, obs: "" },
+    { n: "Ednaldo Tembe", u: "Belém", f: "Assessor", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "O Ednaldo não participa das reuniões pontos de controle. Não há evidências de cumprimento integral das atividades." },
+    { n: "Rildo Mendes", u: "Florianópolis", f: "Chefe", c: [4, 4, 4, 3, 4, 4, 4], med: 3.9, obs: "" },
+    { n: "Diogo Póky Jacinto", u: "Curitiba", f: "Assessor", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Não aciona o ponto focal, não demanda." },
+    { n: "Matavitsa Kena Waura Txucarramãe", u: "Colíder", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Kadjure Metyktire", u: "Colíder", f: "Assessor", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Tania Paiakan Kaiapó", u: "Redenção", f: "Chefe", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Mayara de Assis Cardoso", u: "Redenção", f: "Assessor", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Zenaide Peres de Sousa", u: "Leste Roraima", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Jackson Nascimento Pereira", u: "Leste Roraima", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Placida Beatriz Osorio", u: "Curitiba", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Claudia Leite Vieira", u: "Manaus", f: "Chefe", c: [5, 4, 5, 5, 5, 5, 5], med: 4.9, obs: "" },
+    { n: "Kleuton Lopes De Matos", u: "Manaus", f: "Assessor", c: [1, 1, 1, 0, 0, 1, 0], med: 0.6, obs: "Ausente em todas as tratativas administrativas." },
+    { n: "Solange Pereira Costa", u: "São Luís", f: "Chefe", c: [4, 4, 4, 4, 5, 4, 5], med: 4.3, obs: "" },
+    { n: "Suellen Viana Marize Lopes", u: "São Luís", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Danilo Giupato", u: "Campo Grande", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Moacyr Cañizo de Brito Filho", u: "Lábrea", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Raimunda Pereira Lima", u: "Lábrea", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Luiz Carlos Ferreira Penha", u: "Tefé", f: "Chefe", c: [5, 5, 5, 4, 5, 5, 5], med: 4.9, obs: "" },
+    { n: "Fábio Pereira dos Santos", u: "Tefé", f: "Assessor", c: [5, 5, 5, 4, 5, 5, 4], med: 4.7, obs: "" },
+    { n: "Ronaldo dos Santos Pena", u: "Gov. Valadares", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Roberth Reytmann da Silva", u: "Gov. Valadares", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Erlisson dos Santos Cidade", u: "Parintins", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Andrey Thomassen Corrêa", u: "Parintins", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Ailson dos Santos", u: "Recife", f: "Chefe", c: [2, 4, 4, 1, 4, 5, 5], med: 3.6, obs: "" },
+    { n: "Jacqueline da Silva Targino Soares", u: "Recife", f: "Assessor", c: [4, 3, 4, 4, 3, 4, 4], med: 3.7, obs: "" },
+    { n: "Josafá Piauhy Matreiro", u: "Porto Velho", f: "Chefe", c: [2, 1, 3, 2, 0, 0, 0], med: 1.1, obs: "" },
+    { n: "Domingos Sávio F. de Araújo", u: "Porto Velho", f: "Assessor", c: [2, 1, 3, 2, 0, 0, 0], med: 1.1, obs: "" },
+    { n: "Lilian Cristina P. da Cunha Lima", u: "João Pessoa", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Robson Cassiano Soares", u: "João Pessoa", f: "Assessor", c: [4, 4, 4, 3, 4, 5, 5], med: 4.1, obs: "" },
+    { n: "Guilherme Oliveira Chaves", u: "Centro-Oeste", f: "Coordenador Regional", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Nadja Almeida Guimarães", u: "Salvador", f: "Coordenador Regional", c: [5, 5, 5, 3, 5, 5, 5], med: 4.7, obs: "" },
+    { n: "Ara Josefina Silveira Brasil", u: "Salvador", f: "Assessor", c: [3, 4, 3, 3, 4, 4, 4], med: 3.6, obs: "" },
+    { n: "Gerlane Albuquerque dos Santos", u: "Recife", f: "Coordenador Regional", c: [3, 4, 4, 3, 4, 4, 4], med: 3.7, obs: "" },
+    { n: "Priscila da Silva Ramos", u: "Recife", f: "Assessor", c: [3, 3, 3, 3, 3, 3, 3], med: 3.0, obs: "" },
+    { n: "Eduardo Funchal", u: "Curitiba", f: "Coordenador Regional", c: [4, 4, 4, 3, 4, 5, 5], med: 4.1, obs: "" },
+    { n: "Dione da Conceição Garcia", u: "Curitiba", f: "Assessor", c: [4, 4, 4, 3, 4, 5, 4], med: 4.0, obs: "" },
+    { n: "Rosenilda Aparecida da Silva", u: "São Paulo", f: "Coordenador Regional", c: [3, 4, 4, 2, 4, 4, 4], med: 3.6, obs: "" },
+    { n: "Cleidiane Carvalho Ribeiro", u: "Boa Vista", f: "Coordenador Regional", c: [5, 5, 5, 5, 5, 5, 5], med: 5.0, obs: "" },
+    { n: "Herodoto Jean de Sales", u: "Manaus", f: "Coordenador Regional", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Contratado há pouco tempo (dezembro)." },
+    { n: "Jesiel Rodrigues", u: "Itaituba", f: "Chefe", c: [5, 5, 5, 5, 5, 5, 5], med: 5.0, obs: "" },
+    { n: "Sindomar Waru Munduruku", u: "Itaituba", f: "Assessor", c: [3, 3, 3, 2, 4, 4, 5], med: 3.4, obs: "" },
+    { n: "Avanilson Ijoraru Dias Aires Karaja", u: "Palmas", f: "Chefe", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Não participa dos pontos de controle." },
+    { n: "Eliene Da Silva Machado", u: "Palmas", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Ricardo Cavalcante Barbosa Junior", u: "Atalaia do Norte", f: "Chefe", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Não contratado." },
+    { n: "Analimar Dias Castelo Branco", u: "Atalaia do Norte", f: "Assessor", c: [3, 3, 3, 3, 2, 2, 4], med: 2.9, obs: "" },
+    { n: "Juliana Rodrigues", u: "Cacoal", f: "Chefe", c: [2, 2, 2, 3, 3, 2, 0], med: 2.0, obs: "" },
+    { n: "Rogério Soares Chagas", u: "Cacoal", f: "Assessor", c: [0, 0, 1, 0, 0, 0, 0], med: 0.1, obs: "" },
+    { n: "Jorge Alberto Santos Tembé", u: "Barra dos Garças", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Carlos Henrique Orebewe da Silva", u: "Barra dos Garças", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
+    { n: "Gilmar Wagner", u: "Canarana", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Helio Roberto Andersson Ramos", u: "Canarana", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Maria Eliane Gonçalves da Silva", u: "Boa Vista", f: "Chefe", c: [4, 4, 4, 5, 4, 4, 5], med: 4.3, obs: "" },
+    { n: "Ana Patricia Santana de S. Moreira", u: "Boa Vista", f: "Assessor", c: [4, 4, 4, 5, 4, 4, 5], med: 4.3, obs: "" }
+];
+
+    function getColor(v) {
+        if (v >= 4) return "#166534"; if (v >= 3) return "#ca8a04";
+        if (v >= 1.5) return "#9a3412"; return "#991b1b";
+    }
+
+    // --- MAPA ---
+    const map = L.map('map').setView([-15.0, -55.0], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+    function initResumo() {
+        const tbody = document.querySelector('#tabela-resumo tbody');
+        tbody.innerHTML = '';
+        resumoMapa.forEach(d => {
+            const med = (d.c + d.a) / 2;
+            const color = getColor(med);
+            const marker = L.circleMarker([d.lat, d.lng], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(map);
+            marker.bindTooltip(d.n, { permanent: true, direction: 'top', offset: [0, -8], className: 'label-fixo-cidade' });
+            marker.on('mouseover', (e) => {
+                L.popup({ closeButton: false, offset: L.point(0, -15), className: 'tooltip-detalhes' })
+                .setLatLng(e.latlng)
+                .setContent(`<div style="text-align:center"><strong>${d.n}</strong><br>Chefe: ${d.c.toFixed(1)}<br>Assessor: ${d.a.toFixed(1)}<br>Média: <b>${med.toFixed(1)}</b></div>`)
+                .openOn(map);
+            });
+            marker.on('mouseout', () => map.closePopup());
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${d.n}</td>
+                <td><span class="nota-badge" style="background:${getColor(d.c)}">${d.c.toFixed(1)}</span></td>
+                <td><span class="nota-badge" style="background:${getColor(d.a)}">${d.a.toFixed(1)}</span></td>
+                <td><span class="nota-badge" style="background:${color}">${med.toFixed(1)}</span></td>`;
+            tr.onclick = () => { map.setView([d.lat, d.lng], 6); };
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- TABELA DETALHADA ---
+    function initDetalhado() {
+        const tbody = document.querySelector('#tabela-detalhada tbody');
+        tbody.innerHTML = '';
+        detComp.forEach(d => {
+            const tr = document.createElement('tr');
+            let cols = d.c.map(v => `<td><span class="nota-badge" style="background:${getColor(v)}">${v}</span></td>`).join('');
+            tr.innerHTML = `<td style="font-weight:600">${d.n}</td><td>${d.u}</td><td>${d.f}</td>
+                ${cols}<td><span class="nota-badge" style="background:${getColor(d.med)}">${d.med.toFixed(1)}</span></td>
+                <td style="font-style:italic; color:#64748b">${d.obs}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- FUNÇÃO DE ORDENAÇÃO ---
+    let sortDirection = true;
+    function sortTable(columnIndex, tableId) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.rows);
+
+        const sortedRows = rows.sort((a, b) => {
+            let cellA = a.cells[columnIndex].innerText.replace(',', '.');
+            let cellB = b.cells[columnIndex].innerText.replace(',', '.');
+
+            const valA = isNaN(cellA) ? cellA.toLowerCase() : parseFloat(cellA);
+            const valB = isNaN(cellB) ? cellB.toLowerCase() : parseFloat(cellB);
+
+            if (valA < valB) return sortDirection ? -1 : 1;
+            if (valA > valB) return sortDirection ? 1 : -1;
+            return 0;
+        });
+
+        sortDirection = !sortDirection;
+        tbody.append(...sortedRows);
+    }
+
+    function openTab(id, el) {
+        document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tabs li').forEach(l => l.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+        if(id === 'page-mapa') setTimeout(() => { map.invalidateSize(); }, 200);
+    }
+
+    initResumo();
+    initDetalhado();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
