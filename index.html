@@ -1,20 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-
-  <head>
-    <meta charset="UTF-8">
-    <title>Gestão por Competências v2</title>
-    
-
-  </head>
-    
-  <body>
-  <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel - Monitoramento Completo</title>
+    <title>Painel - Monitoramento AGSUS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,33 +15,115 @@
         .nav-tabs { display: flex; list-style: none; margin: 0; padding: 0; height: 100%; }
         .nav-tabs li { display: flex; align-items: center; padding: 0 20px; cursor: pointer; color: #cbd5e0; border-bottom: 4px solid transparent; transition: 0.3s; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .nav-tabs li:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-tabs li.active { border-bottom: 4px solid #4ade80; color: white; background: rgba(255,255,255,0.1); font-weight: bold; }
+        .nav-tabs li.active { border-bottom: 4px solid #3b82f6; color: white; background: rgba(255,255,255,0.1); font-weight: bold; }
 
         .content-page { display: none; flex: 1; overflow: hidden; position: relative; }
         .content-page.active { display: flex; }
 
-        #map { flex: 2; background: #cbd5e0; }
-        #sidebar-resumo { flex: 1; min-width: 400px; background: white; overflow-y: auto; padding: 20px; border-left: 1px solid #e2e8f0; padding-bottom: 60px; }
+        #map { flex: 2; background: #cbd5e0; position: relative; }
+        #sidebar-resumo { flex: 1; min-width: 420px; background: white; overflow-y: auto; padding: 15px; border-left: 1px solid #e2e8f0; padding-bottom: 60px; }
+
+        /* Estilo do Popup no Mapa */
+        .custom-popup .leaflet-popup-content-wrapper { background: #002d57; color: #fff; border-radius: 8px; padding: 5px; }
+        .custom-popup .leaflet-popup-tip { background: #002d57; }
+        .popup-data { font-size: 12px; line-height: 1.6; }
+        .popup-title { font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 5px; padding-bottom: 2px; font-size: 14px; }
+
+        /* Legenda do Mapa com status integrados */
+        .map-legend-container {
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 280px;
+        }
+        
+        .map-legend, .status-box {
+            background: white; 
+            padding: 10px; 
+            border-radius: 5px; 
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4); 
+            line-height: 18px; 
+            color: #333;
+            backdrop-filter: blur(2px);
+        }
+        
+        .status-box {
+            padding: 8px 10px;
+        }
+        
+        .legend-title {
+            font-weight: 600;
+            font-size: 12px;
+            color: #002d57;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-item { display: flex; align-items: center; margin-bottom: 4px; font-size: 11px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; border: 1px solid #666; flex-shrink: 0; }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 5px;
+        }
+        
+        .status-section {
+            font-size: 11px;
+        }
+        
+        .status-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+            justify-content: space-between;
+        }
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-count {
+            font-weight: 600;
+            font-size: 11px;
+            color: #0f172a;
+        }
+        
+        .status-label {
+            font-size: 10px;
+            color: #475569;
+        }
+
+        /* Caixas de Texto (Critérios) */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .info-box { background: #f1f5f9; padding: 10px; border-radius: 6px; border-left: 4px solid #002d57; font-size: 11px; }
+        .info-box h4 { margin: 0 0 5px 0; font-size: 12px; color: #002d57; }
+        .info-box ul { margin: 0; padding-left: 15px; }
 
         #page-competencias { flex-direction: column; padding: 25px; background: white; overflow-y: auto; }
         .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 60px; }
         
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f1f5f9; color: #475569; padding: 10px; text-align: left; position: sticky; top: 0; border-bottom: 2px solid #e2e8f0; z-index: 10; cursor: pointer; user-select: none; }
+        th { background: #f8fafc; color: #475569; padding: 10px; text-align: left; position: sticky; top: 0; border-bottom: 2px solid #e2e8f0; z-index: 10; cursor: pointer; transition: background 0.2s; }
         th:hover { background: #e2e8f0; }
-        th::after { content: ' ↕'; font-size: 9px; color: #94a3b8; }
+        th::after { content: ' ↕'; font-size: 10px; color: #94a3b8; margin-left: 5px; }
         
-        td { padding: 8px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
-        tr:hover { background: #f8fafc; }
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
 
         .nota-badge { display: inline-block; width: 28px; text-align: center; padding: 2px 0; border-radius: 4px; color: white; font-weight: bold; }
-        
-        .label-fixo-cidade { background: transparent; border: none; box-shadow: none; font-weight: 800; color: #0f172a; font-size: 10px; text-shadow: 1px 1px 2px white, -1px -1px 2px white; white-space: nowrap; }
-        .tooltip-detalhes { background: #002d57; color: white; border: none; border-radius: 4px; padding: 8px; font-size: 11px; }
+        .label-fixo-cidade { background: transparent; border: none; box-shadow: none; font-weight: 800; color: #0f172a; font-size: 10px; text-shadow: 1px 1px 2px white; pointer-events: none; }
 
         .footer-link { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; background: rgba(255, 255, 255, 0.95); border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; z-index: 2000; font-size: 12px; backdrop-filter: blur(5px); }
         .footer-link a { color: #002d57; text-decoration: none; font-weight: 600; }
-        .footer-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -60,22 +131,47 @@
 <header>
     <div style="font-weight: bold; font-size: 18px;">AGSUS - Gestão de Competências</div>
     <ul class="nav-tabs">
-        <li onclick="openTab('page-mapa', this)" class="active">Visão Geral (Resumo)</li>
-        <li onclick="openTab('page-competencias', this)"> Avaliação Detalhada (Detalhado)</li>
+        <li onclick="openTab('page-mapa', this)" class="active">Visão Geral</li>
+        <li onclick="openTab('page-competencias', this)">Avaliação Detalhada</li>
     </ul>
 </header>
 
 <div id="page-mapa" class="content-page active">
     <div id="map"></div>
     <div id="sidebar-resumo">
+        <div class="info-grid">
+            <div class="info-box">
+                <h4>Critérios Avaliados</h4>
+                <ul>
+                    <li>Gestão de processos</li>
+                    <li>Gestão de Projetos</li>
+                    <li>Governança e conformidade</li>
+                    <li>Qualidade no SEI</li>
+                    <li>Decisão baseada em evidência</li>
+                    <li>Institucional</li>
+                    <li>Comunicação</li>
+                </ul>
+            </div>
+            <div class="info-box">
+                <h4>Escala de Avaliação</h4>
+                <ul>
+                    <li>0: Desconhece</li>
+                    <li>1: Conhece Termos</li>
+                    <li>2: Aplica com erros</li>
+                    <li>3: Aplica corretamente</li>
+                    <li>4: Aplica e orienta</li>
+                    <li>5: Melhora o processo</li>
+                </ul>
+            </div>
+        </div>
+
         <h3 style="margin-top:0">Consolidado por Distrito</h3>
         <table id="tabela-resumo">
             <thead>
                 <tr>
                     <th onclick="sortTable(0, 'tabela-resumo')">Unidade</th>
-                    <th onclick="sortTable(1, 'tabela-resumo')">Chefe</th>
-                    <th onclick="sortTable(2, 'tabela-resumo')">Asse.</th>
-                    <th onclick="sortTable(3, 'tabela-resumo')">Média</th>
+                    <th onclick="sortTable(1, 'tabela-resumo')">Nota Chefe</th>
+                    <th onclick="sortTable(2, 'tabela-resumo')">Nota Asse.</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -92,13 +188,13 @@
                     <th onclick="sortTable(0, 'tabela-detalhada')">Nome</th>
                     <th onclick="sortTable(1, 'tabela-detalhada')">Unidade</th>
                     <th onclick="sortTable(2, 'tabela-detalhada')">Função</th>
-                    <th onclick="sortTable(3, 'tabela-detalhada')">Gestão de processos</th>
-                    <th onclick="sortTable(4, 'tabela-detalhada')">Gestão de projetos</th>
-                    <th onclick="sortTable(5, 'tabela-detalhada')">Governança</th>
+                    <th onclick="sortTable(3, 'tabela-detalhada')">Proc.</th>
+                    <th onclick="sortTable(4, 'tabela-detalhada')">Proj.</th>
+                    <th onclick="sortTable(5, 'tabela-detalhada')">Gov.</th>
                     <th onclick="sortTable(6, 'tabela-detalhada')">SEI</th>
-                    <th onclick="sortTable(7, 'tabela-detalhada')">Decisão</th>
+                    <th onclick="sortTable(7, 'tabela-detalhada')">Decis.</th>
                     <th onclick="sortTable(8, 'tabela-detalhada')">Inst.</th>
-                    <th onclick="sortTable(9, 'tabela-detalhada')">Comun.</th>
+                    <th onclick="sortTable(9, 'tabela-detalhada')">Comu.</th>
                     <th onclick="sortTable(10, 'tabela-detalhada')">Média</th>
                     <th onclick="sortTable(11, 'tabela-detalhada')">Observações</th>
                 </tr>
@@ -109,12 +205,25 @@
 </div>
 
 <footer class="footer-link">
-    <a href="https://docs.google.com/spreadsheets/d/1EWxmHVDE_Yp_DIGZ-jT9Z1BZ3KVrxM23XsxZgz4L0X0/edit?gid=0#gid=0" target="_blank">
+    <a href="https://docs.google.com/spreadsheets/d/1EWxmHVDE_Yp_DIGZ-jT9Z1BZ3KVrxM23XsxZgz4L0X0/edit#gid=0" target="_blank">
         🔗 Clique aqui para acessar a Base de Dados Completa
     </a>
 </footer>
 
 <script>
+    function getColor(v) {
+        if (v < 2.0) return "#991b1b";      
+        if (v < 3.5) return "#ca8a04";      
+        return "#1d4ed8";                   
+    }
+
+    function getStatus(v) {
+        if (v < 2.0) return { nome: "Avaliar", cor: "#991b1b" };
+        if (v < 3.5) return { nome: "Capacitar", cor: "#ca8a04" };
+        return { nome: "Satisfatório", cor: "#1d4ed8" };
+    }
+
+    // [Dados resumoMapa mantidos para funcionamento...]
     const resumoMapa = [
     { n: "Maceió", lat: -9.66, lng: -35.73, c: 4.3, a: 2.9 },
     { n: "Altamira", lat: -3.20, lng: -52.20, c: 4.6, a: 3.9 },
@@ -154,6 +263,7 @@
     { n: "São Paulo", lat: -23.55, lng: -46.63, c: 3.6, a: 0.0 }
 ];
 
+    // [Dados detComp mantidos...]
     const detComp = [
     { n: "Maynamy Jose Santana Da Silva", u: "Maceió", f: "Chefe", c: [3, 4, 4, 4, 5, 5, 5], med: 4.3, obs: "" },
     { n: "Manoel Mendonca De Farias Neto", u: "Maceió", f: "Assessor", c: [2, 2, 3, 3, 3, 3, 4], med: 2.9, obs: "" },
@@ -193,6 +303,7 @@
     { n: "Solange Pereira Costa", u: "São Luís", f: "Chefe", c: [4, 4, 4, 4, 5, 4, 5], med: 4.3, obs: "" },
     { n: "Suellen Viana Marize Lopes", u: "São Luís", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
     { n: "Danilo Giupato", u: "Campo Grande", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 5], med: 4.1, obs: "" },
+    { n: "Neyre Morais da Silva", u: "Campo Grande", f: "Assessor", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "" },
     { n: "Moacyr Cañizo de Brito Filho", u: "Lábrea", f: "Chefe", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
     { n: "Raimunda Pereira Lima", u: "Lábrea", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
     { n: "Luiz Carlos Ferreira Penha", u: "Tefé", f: "Chefe", c: [5, 5, 5, 4, 5, 5, 5], med: 4.9, obs: "" },
@@ -233,14 +344,130 @@
     { n: "Ana Patricia Santana de S. Moreira", u: "Boa Vista", f: "Assessor", c: [4, 4, 4, 5, 4, 4, 5], med: 4.3, obs: "" }
 ];
 
-    function getColor(v) {
-        if (v >= 4) return "#166534"; if (v >= 3) return "#ca8a04";
-        if (v >= 1.5) return "#9a3412"; return "#991b1b";
+    // Função para calcular percentuais
+    function calcularPercentuais() {
+        const chefes = detComp.filter(d => d.f.includes("Chefe") || d.f.includes("Coordenador Regional"));
+        const assessores = detComp.filter(d => d.f.includes("Assessor"));
+        
+        const statusTypes = [
+            { nome: "Satisfatório", min: 3.5, max: 5.0, cor: "#1d4ed8" },
+            { nome: "Capacitar", min: 2.0, max: 3.49, cor: "#ca8a04" },
+            { nome: "Avaliar", min: 0, max: 1.99, cor: "#991b1b" }
+        ];
+        
+        function calcularParaGrupo(grupo) {
+            const result = {};
+            const total = grupo.length;
+            
+            statusTypes.forEach(status => {
+                const count = grupo.filter(d => d.med >= status.min && d.med <= status.max).length;
+                const percent = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
+                result[status.nome] = { percent, count, total, cor: status.cor };
+            });
+            
+            return result;
+        }
+        
+        return {
+            chefes: calcularParaGrupo(chefes),
+            assessores: calcularParaGrupo(assessores)
+        };
+    }
+    
+    // Função para criar a legenda com status integrados
+    function criarLegendaComStatus() {
+        const container = L.DomUtil.create('div', 'map-legend-container');
+        
+        // Legenda principal
+        const legendDiv = L.DomUtil.create('div', 'map-legend');
+        legendDiv.innerHTML = `
+            <div class="legend-title">📊 Status de Competência</div>
+            <div class="legend-item"><div class="legend-color" style="background:#1d4ed8"></div> Satisfatório (>= 3.5)</div>
+            <div class="legend-item"><div class="legend-color" style="background:#ca8a04"></div> Capacitar (2.0 - 3.4)</div>
+            <div class="legend-item"><div class="legend-color" style="background:#991b1b"></div> Avaliar (< 2.0)</div>
+        `;
+        
+        container.appendChild(legendDiv);
+        
+        // Calcular percentuais
+        const percentuais = calcularPercentuais();
+        
+        // Caixa de status dos chefes e assessores
+        const statusDiv = L.DomUtil.create('div', 'status-box');
+        statusDiv.innerHTML = `
+            <div class="legend-title">👥 Distribuição por Função</div>
+            <div class="status-grid">
+                <div class="status-section">
+                    <div class="legend-title" style="font-size:11px; margin-bottom:5px;">👑 Chefes</div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#1d4ed8"></div>
+                            <span class="status-label">Satisfatório</span>
+                        </div>
+                        <div class="status-count">${percentuais.chefes["Satisfatório"].percent}%</div>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#ca8a04"></div>
+                            <span class="status-label">Capacitar</span>
+                        </div>
+                        <div class="status-count">${percentuais.chefes["Capacitar"].percent}%</div>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#991b1b"></div>
+                            <span class="status-label">Avaliar</span>
+                        </div>
+                        <div class="status-count">${percentuais.chefes["Avaliar"].percent}%</div>
+                    </div>
+                </div>
+                <div class="status-section">
+                    <div class="legend-title" style="font-size:11px; margin-bottom:5px;">👥 Assessores</div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#1d4ed8"></div>
+                            <span class="status-label">Satisfatório</span>
+                        </div>
+                        <div class="status-count">${percentuais.assessores["Satisfatório"].percent}%</div>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#ca8a04"></div>
+                            <span class="status-label">Capacitar</span>
+                        </div>
+                        <div class="status-count">${percentuais.assessores["Capacitar"].percent}%</div>
+                    </div>
+                    <div class="status-row">
+                        <div class="status-info">
+                            <div class="legend-color" style="background:#991b1b"></div>
+                            <span class="status-label">Avaliar</span>
+                        </div>
+                        <div class="status-count">${percentuais.assessores["Avaliar"].percent}%</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(statusDiv);
+        
+        return container;
     }
 
-    // --- MAPA ---
     const map = L.map('map').setView([-15.0, -55.0], 4);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+    // Adicionar legenda customizada com status
+    L.Control.StatusLegend = L.Control.extend({
+        onAdd: function(map) {
+            return criarLegendaComStatus();
+        }
+    });
+    
+    L.control.statusLegend = function(opts) {
+        return new L.Control.StatusLegend(opts);
+    };
+    
+    L.control.statusLegend({ position: 'bottomleft' }).addTo(map);
 
     function initResumo() {
         const tbody = document.querySelector('#tabela-resumo tbody');
@@ -249,26 +476,30 @@
             const med = (d.c + d.a) / 2;
             const color = getColor(med);
             const marker = L.circleMarker([d.lat, d.lng], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(map);
-            marker.bindTooltip(d.n, { permanent: true, direction: 'top', offset: [0, -8], className: 'label-fixo-cidade' });
-            marker.on('mouseover', (e) => {
-                L.popup({ closeButton: false, offset: L.point(0, -15), className: 'tooltip-detalhes' })
-                .setLatLng(e.latlng)
-                .setContent(`<div style="text-align:center"><strong>${d.n}</strong><br>Chefe: ${d.c.toFixed(1)}<br>Assessor: ${d.a.toFixed(1)}<br>Média: <b>${med.toFixed(1)}</b></div>`)
-                .openOn(map);
+
+            marker.on('mouseover', function (e) {
+                const content = `
+                    <div class="popup-data">
+                        <div class="popup-title">${d.n}</div>
+                        Nota Chefe: <b>${d.c.toFixed(1)}</b><br>
+                        Nota Assessor: <b>${d.a.toFixed(1)}</b><br>
+                        Média Geral: <b>${med.toFixed(1)}</b>
+                    </div>`;
+                L.popup({ closeButton: false, className: 'custom-popup', offset: [0, -10] })
+                    .setLatLng(e.latlng).setContent(content).openOn(map);
             });
             marker.on('mouseout', () => map.closePopup());
+            marker.bindTooltip(d.n, { permanent: true, direction: 'top', offset: [0, -8], className: 'label-fixo-cidade' });
             
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${d.n}</td>
                 <td><span class="nota-badge" style="background:${getColor(d.c)}">${d.c.toFixed(1)}</span></td>
-                <td><span class="nota-badge" style="background:${getColor(d.a)}">${d.a.toFixed(1)}</span></td>
-                <td><span class="nota-badge" style="background:${color}">${med.toFixed(1)}</span></td>`;
+                <td><span class="nota-badge" style="background:${getColor(d.a)}">${d.a.toFixed(1)}</span></td>`;
             tr.onclick = () => { map.setView([d.lat, d.lng], 6); };
             tbody.appendChild(tr);
         });
     }
 
-    // --- TABELA DETALHADA ---
     function initDetalhado() {
         const tbody = document.querySelector('#tabela-detalhada tbody');
         tbody.innerHTML = '';
@@ -277,31 +508,28 @@
             let cols = d.c.map(v => `<td><span class="nota-badge" style="background:${getColor(v)}">${v}</span></td>`).join('');
             tr.innerHTML = `<td style="font-weight:600">${d.n}</td><td>${d.u}</td><td>${d.f}</td>
                 ${cols}<td><span class="nota-badge" style="background:${getColor(d.med)}">${d.med.toFixed(1)}</span></td>
-                <td style="font-style:italic; color:#64748b">${d.obs}</td>`;
+                <td style="color:#64748b; font-style:italic">${d.obs}</td>`;
             tbody.appendChild(tr);
         });
     }
 
-    // --- FUNÇÃO DE ORDENAÇÃO ---
-    let sortDirection = true;
+    let sortOrders = {}; 
     function sortTable(columnIndex, tableId) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.rows);
-
+        if (!sortOrders[tableId + columnIndex]) sortOrders[tableId + columnIndex] = 'asc';
+        else sortOrders[tableId + columnIndex] = sortOrders[tableId + columnIndex] === 'asc' ? 'desc' : 'asc';
+        const dir = sortOrders[tableId + columnIndex];
         const sortedRows = rows.sort((a, b) => {
-            let cellA = a.cells[columnIndex].innerText.replace(',', '.');
-            let cellB = b.cells[columnIndex].innerText.replace(',', '.');
-
+            let cellA = a.cells[columnIndex].innerText.trim().replace(',', '.');
+            let cellB = b.cells[columnIndex].innerText.trim().replace(',', '.');
             const valA = isNaN(cellA) ? cellA.toLowerCase() : parseFloat(cellA);
             const valB = isNaN(cellB) ? cellB.toLowerCase() : parseFloat(cellB);
-
-            if (valA < valB) return sortDirection ? -1 : 1;
-            if (valA > valB) return sortDirection ? 1 : -1;
+            if (valA < valB) return dir === 'asc' ? -1 : 1;
+            if (valA > valB) return dir === 'asc' ? 1 : -1;
             return 0;
         });
-
-        sortDirection = !sortDirection;
         tbody.append(...sortedRows);
     }
 
@@ -317,8 +545,4 @@
     initDetalhado();
 </script>
 </body>
-</html>
-    
-  </body>
-  
 </html>
