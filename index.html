@@ -329,7 +329,6 @@
     { n: "Sindomar Waru Munduruku", u: "Itaituba", f: "Assessor", c: [3, 3, 3, 2, 4, 4, 5], med: 3.4, obs: "" },
     { n: "Avanilson Ijoraru Dias Aires Karaja", u: "Palmas", f: "Chefe", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Não participa dos pontos de controle." },
     { n: "Eliene Da Silva Machado", u: "Palmas", f: "Assessor", c: [4, 4, 4, 4, 4, 4, 4], med: 4.0, obs: "" },
-    { n: "Ricardo Cavalcante Barbosa Junior", u: "Atalaia do Norte", f: "Chefe", c: [0, 0, 0, 0, 0, 0, 0], med: 0.0, obs: "Não contratado." },
     { n: "Analimar Dias Castelo Branco", u: "Atalaia do Norte", f: "Assessor", c: [3, 3, 3, 3, 2, 2, 4], med: 2.9, obs: "" },
     { n: "Juliana Rodrigues", u: "Cacoal", f: "Chefe", c: [2, 2, 2, 3, 3, 2, 0], med: 2.0, obs: "" },
     { n: "Rogério Soares Chagas", u: "Cacoal", f: "Assessor", c: [0, 0, 1, 0, 0, 0, 0], med: 0.1, obs: "" },
@@ -539,7 +538,83 @@
     }
 
     initResumo();
-    initDetalhado();
+    initDetalhado()
+// Adicionar após a função initDetalhado()
+
+// Função para destacar notas em verde
+function destacarNotasVerde() {
+    // Nomes específicos para destacar
+    const nomesEspecificos = [
+        "Ricardo Cavalcante Barbosa Junior",
+        "Herodoto Jean de Sales"
+    ];
+    
+    // Funções e unidades específicas para destacar
+    const funcoesUnidadesEspecificas = [
+        { unidade: "Campo Grande", funcao: "Assessor" },
+        { unidade: "Atalaia do Norte", funcao: "Chefe" }
+    ];
+    
+    // Destacar na tabela detalhada
+    const linhasDetalhadas = document.querySelectorAll('#tabela-detalhada tbody tr');
+    
+    linhasDetalhadas.forEach(linha => {
+        const nome = linha.cells[0].textContent.trim();
+        const unidade = linha.cells[1].textContent.trim();
+        const funcao = linha.cells[2].textContent.trim();
+        
+        // Verificar se é um dos nomes específicos
+        const nomeEspecifico = nomesEspecificos.includes(nome);
+        
+        // Verificar se é assessor de Campo Grande ou chefe de Atalaia do Norte
+        const funcaoEspecifica = funcoesUnidadesEspecificas.some(item => 
+            unidade === item.unidade && funcao === item.funcao
+        );
+        
+        if (nomeEspecifico || funcaoEspecifica) {
+            // Destacar todas as células de nota (da coluna 3 à 10 - 7 competências + média)
+            for (let i = 3; i <= 10; i++) {
+                if (linha.cells[i]) {
+                    const badge = linha.cells[i].querySelector('.nota-badge');
+                    if (badge) {
+                        badge.style.background = '#16a34a'; // Verde
+                        badge.style.color = 'white';
+                    }
+                }
+            }
+        }
+    });
+    
+    // Destacar na tabela resumo (visão geral)
+    const linhasResumo = document.querySelectorAll('#tabela-resumo tbody tr');
+    
+    linhasResumo.forEach(linha => {
+        const unidade = linha.cells[0].textContent.trim();
+        
+        // Verificar se é Campo Grande (assessor) ou Atalaia do Norte (chefe)
+        if (unidade === "Campo Grande") {
+            // Destacar nota do assessor (coluna 2)
+            const badgeAssessor = linha.cells[2].querySelector('.nota-badge');
+            if (badgeAssessor) {
+                badgeAssessor.style.background = '#16a34a'; // Verde
+                badgeAssessor.style.color = 'white';
+            }
+        }
+        
+        if (unidade === "Atalaia Norte") {
+            // Destacar nota do chefe (coluna 1)
+            const badgeChefe = linha.cells[1].querySelector('.nota-badge');
+            if (badgeChefe) {
+                badgeChefe.style.background = '#16a34a'; // Verde
+                badgeChefe.style.color = 'white';
+            }
+        }
+    });
+}
+
+// Chamar a função após inicializar as tabelas
+destacarNotasVerde();
+;
 </script>
 </body>
 </html>
